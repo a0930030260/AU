@@ -1,1 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
 
+<!-- PWA Manifest & App Icons -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23002B49'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='280'>🦘</text></svg>">
+
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>澳洲打工度假行前任務卡 (智能版)</title>
+  <meta name="theme-color" content="#002B49">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root {
+      --au-green: #00843D;
+      --au-gold: #FFCD00;
+      --au-navy: #002B49;
+      --au-sky: #E6F4EA;
+      --au-red: #E53E3E;
+      --bg-color: #F4F6F8;
+      --card-bg: #FFFFFF;
+      --text-dark: #1C2833;
+      --text-muted: #627D98;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* 頁首與進度條區塊 */
+    header {
+      width: 100%;
+      max-width: 420px;
+      background: var(--au-navy);
+      color: #FFF;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 43, 73, 0.15);
+      margin-bottom: 12px;
+    }
+
+    .header-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .header-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--au-gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reset-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #FFF;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .reset-btn:hover {
+      background: rgba(229, 62, 62, 0.8);
+      border-color: transparent;
+    }
+
+    .progress-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #FFF;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--au-gold), #FFE57F);
+      border-radius: 5px;
+      transition: width 0.4s ease;
+    }
+
+    /* 檢視模式切換 */
+    .view-selector {
+      display: flex;
+      width: 100%;
+      max-width: 420px;
+      background: #E2E8F0;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 12px;
+    }
+
+    .view-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .view-btn.active {
+      background: #FFF;
+      color: var(--au-navy);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    /* 階段分頁標籤 */
+    .stage-tabs {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+
+    .stage-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      background: #E2E8F0;
+      color: var(--text-muted);
+      border: none;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--au-green);
+      color: #FFF;
+      box-shadow: 0 4px 10px rgba(0, 132, 61, 0.3);
+    }
+
+    /* 單字卡 Container (3D Flip) */
+    .card-container {
+      width: 100%;
+      max-width: 420px;
+      height: 480px;
+      perspective: 1000px;
+      margin-bottom: 12px;
+    }
+
+    .flashcard {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 24px;
+      padding: 20px;
+      background: var(--card-bg);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      border: 2px solid #EDF2F7;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* 正面 (Front) */
+    .card-front {
+      border-top: 8px solid var(--au-green);
+    }
+
+    .card-front .tag-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .card-front .stage-tag {
+      background: var(--au-sky);
+      color: var(--au-green);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    /* 正面日期選擇器樣式 */
+    .date-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #EDF2F7;
+      padding: 4px 8px;
+      border-radius: 10px;
+    }
+
+    .date-picker-wrapper label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--au-navy);
+    }
+
+    .date-picker-wrapper input[type="date"] {
+      border: none;
+      background: transparent;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--au-navy);
+      cursor: pointer;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .card-front .task-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--au-navy);
+      margin-top: 10px;
+      line-height: 1.3;
+    }
+
+    .card-front .task-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .card-front .hint-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--au-green);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #F0FFF4;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px dashed var(--au-green);
+      margin-bottom: 12px;
+    }
+
+    /* 警示提醒方塊 */
+    .warning-box {
+      font-size: 0.82rem;
+      background: #FFF5F5;
+      color: var(--au-red);
+      border: 1px solid #FEB2B2;
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .action-check-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: var(--au-green);
+      color: #FFF;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 132, 61, 0.25);
+    }
+
+    .action-check-btn.completed {
+      background: #718096;
+      box-shadow: none;
+    }
+
+    .action-check-btn.disabled {
+      background: #CBD5E0;
+      color: #718096;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* 反面 (Back) - 純任務說明 */
+    .card-back {
+      transform: rotateY(180deg);
+      border-top: 8px solid var(--au-gold);
+      background: #FAFAFA;
+      overflow-y: auto;
+    }
+
+    .card-back h3 {
+      font-size: 1.1rem;
+      color: var(--au-navy);
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--au-gold);
+      padding-bottom: 6px;
+    }
+
+    .task-details {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #2D3748;
+    }
+
+    /* 控制按鈕列 */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 420px;
+      padding: 0 8px;
+    }
+
+    .nav-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--au-navy);
+      color: #FFF;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 43, 73, 0.2);
+    }
+
+    .card-counter {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--au-navy);
+    }
+
+    /* 月曆檢視區塊 */
+    .calendar-container {
+      width: 100%;
+      max-width: 420px;
+      background: #FFF;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      display: none;
+    }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .cal-header h2 {
+      font-size: 1.1rem;
+      color: var(--au-navy);
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .cal-weekday {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding-bottom: 4px;
+    }
+
+    .cal-day {
+      min-height: 52px;
+      background: #F8FAFC;
+      border-radius: 8px;
+      padding: 4px;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      border: 1px solid #EDF2F7;
+    }
+
+    .cal-day.today {
+      border: 2px solid var(--au-green);
+      background: #F0FFF4;
+    }
+
+    .cal-day-num {
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+
+    .cal-badge-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .cal-badge {
+      width: 100%;
+      height: 16px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .cal-badge:hover {
+      transform: scale(1.05);
+    }
+
+    .cal-badge.done { background: var(--au-green); }
+    .cal-badge.pending { background: var(--au-gold); color: #000; }
+    .cal-badge.overdue { background: var(--au-red); }
+    
+    /* 出發日專屬標籤風格 */
+    .cal-badge.departure {
+      background: #E53E3E;
+      color: #FFF;
+      border: 1px solid #FFD700;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+    }
+
+    /* 出發日期Modal彈窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: #FFF;
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal-content h3 {
+      color: var(--au-navy);
+      margin-bottom: 8px;
+    }
+
+    .modal-content p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-content input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #CBD5E0;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .modal-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .modal-btn.confirm {
+      background: var(--au-green);
+      color: #FFF;
+    }
+
+    .modal-btn.cancel {
+      background: #E2E8F0;
+      color: var(--text-dark);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頁首與進度條 -->
+  <header>
+    <div class="header-title">
+      <h1>🦘 澳打行前任務卡</h1>
+      <div class="header-actions">
+        <button class="reset-btn" onclick="resetAllData()">🔄 重置</button>
+        <span class="progress-status" id="progress-text">0 / 0</span>
+      </div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+  </header>
+
+  <!-- 檢視切換按鈕 -->
+  <div class="view-selector">
+    <button class="view-btn active" id="btn-card-view" onclick="switchView('card')">🎴 卡片檢視</button>
+    <button class="view-btn" id="btn-cal-view" onclick="switchView('calendar')">📅 月曆排程</button>
+  </div>
+
+  <!-- 階段分頁標籤 -->
+  <div class="stage-tabs" id="stage-tabs"></div>
+
+  <!-- 卡片視圖區域 -->
+  <div id="card-view-wrapper" style="width: 100%; max-width: 420px;">
+    <div class="card-container" onclick="flipCard(event)">
+      <div class="flashcard" id="flashcard">
+        
+        <!-- 正面 -->
+        <div class="card-face card-front">
+          <div>
+            <div class="tag-row">
+              <span class="stage-tag" id="front-stage">階段</span>
+              <!-- 正面：日期輸入區塊 -->
+              <div class="date-picker-wrapper" onclick="event.stopPropagation()">
+                <label for="due-date-input">📅 預定日</label>
+                <input type="date" id="due-date-input" onchange="saveDueDate(event)">
+              </div>
+            </div>
+            <h2 class="task-title" id="front-title">任務標題</h2>
+            <p class="task-subtitle" id="front-subtitle">摘要說明...</p>
+          </div>
+
+          <div>
+            <div class="hint-text">
+              🔄 點擊卡片查看詳細步驟
+            </div>
+
+            <!-- 警示提醒方塊 -->
+            <div class="warning-box" id="warning-box" style="display: none;"></div>
+
+            <!-- 正面：標記完成按鈕 -->
+            <button class="action-check-btn" id="check-btn" onclick="toggleTaskComplete(event)">
+              <span>✅ 標記為已完成</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 反面：純任務說明 -->
+        <div class="card-face card-back">
+          <div>
+            <h3>📋 任務具體步驟與說明</h3>
+            <div class="task-details" id="back-details"></div>
+          </div>
+          <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding-top: 10px;">
+            🔄 點擊任意處翻回正面
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 導覽列 -->
+    <div class="controls">
+      <button class="nav-btn" onclick="prevCard()">◀</button>
+      <span class="card-counter" id="card-counter">1 / 1</span>
+      <button class="nav-btn" onclick="nextCard()">▶</button>
+    </div>
+  </div>
+
+  <!-- 月曆視圖區域 -->
+  <div class="calendar-container" id="calendar-view">
+    <div class="cal-header">
+      <button class="tab-btn" onclick="changeCalMonth(-1)">◀ 上個月</button>
+      <h2 id="cal-month-title">2026年 9月</h2>
+      <button class="tab-btn" onclick="changeCalMonth(1)">下個月 ▶</button>
+    </div>
+    <div class="cal-grid" id="cal-grid-body"></div>
+  </div>
+
+  <!-- 出發日期 Modal -->
+  <div class="modal-overlay" id="flight-modal" style="display: none;">
+    <div class="modal-content">
+      <h3>✈️ 設定澳洲出發日期</h3>
+      <p>恭喜完成機票預訂！請輸入您的預計飛往澳洲日期，系統將在月曆上進行特別標記：</p>
+      <input type="date" id="departure-date-input">
+      <div class="modal-btn-group">
+        <button class="modal-btn cancel" onclick="closeFlightModal()">稍後再設</button>
+        <button class="modal-btn confirm" onclick="saveDepartureDate()">確認儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 原始任務資料
+    const taskData = [
+      { id: 1, stage: 1, stageName: "第一階段 (3-6個月前)", title: "護照檢查與換發", subtitle: "確認效期是否充足", details: "確認護照有效期限在 <b>6 個月以上</b>。若效期不足，請立即至外交部領事事務局辦理換發。" },
+      { id: 2, stage: 1, stageName: "第一階段 (3-6個月前)", title: "英文財力證明", subtitle: "申請 AUD $5,000 以上證明", details: "向開戶銀行申請英文版存款餘額證明（標示 AUD 或 USD）。金額需達 <b>5,000 澳幣</b>（約 NT$10–11 萬）及離境機票等值資金。" },
+      { id: 3, stage: 1, stageName: "第一階段 (3-6個月前)", title: "線上申請打工度假簽證", subtitle: "Subclass 417 / 462", details: "至澳洲內政部 ImmiAccount 官網線上填寫申請表、上傳護照與財力證明，並線上刷卡繳交簽證費用。" },
+      { id: 4, stage: 1, stageName: "第一階段 (3-6個月前)", title: "指定醫院體檢", subtitle: "預約 X 光胸部檢查", details: "遞交簽證後下載 HAP Letter，前往指定醫院（如臺安、馬偕、中國醫等）完成胸部 X 光體檢。" },
+      { id: 5, stage: 1, stageName: "第一階段 (3-6個月前)", title: "保存簽證核準信", subtitle: "Visa Grant Notice", details: "體檢通過後收到 Email 核準信，仔細核對英文姓名與護照號碼，列印紙本並上傳雲端備份。" },
+
+      { id: 6, stage: 2, stageName: "第二階段 (1-2個月前)", title: "購買單程機票", subtitle: "確認托運行李額度", details: "建議購買單程票或可改簽機票，確認託運行李額度（建議 30kg 以上），印出機票行程單。" },
+      { id: 7, stage: 2, stageName: "第二階段 (1-2個月前)", title: "國際駕照與 NAATI 譯本", subtitle: "自駕/買車必備", details: "帶駕照正本、身分證、2吋照片至監理所辦理國際駕照。長期駕車建議額外準備 NAATI 英文譯本，並攜帶台灣駕照正本。" },
+      { id: 8, stage: 2, stageName: "第二階段 (1-2個月前)", title: "投保海外醫療保險", subtitle: "申請英文保險證明", details: "投保包含海外突發疾病、意外與緊急醫療救護的保險（涵號全期或前 180 天），並申請英文保單證明。" },
+      { id: 9, stage: 2, stageName: "第二階段 (1-2個月前)", title: "台灣銀行開通海外功能", subtitle: "海外刷卡/提款與換匯", details: "前往銀行開通信用卡/簽帳卡的「海外刷卡」與「海外ATM提款」（設定4位數國外提款密碼）。預先換取 AUD $500 – $1,500 澳幣現金。" },
+      { id: 10, stage: 2, stageName: "第二階段 (1-2個月前)", title: "國內行政與健保處理", subtitle: "健保停保與電信門號", details: "預計出國逾 6 個月者可辦理健保停保；台灣手機門號轉低月租或預付卡，以便在海外接收 OTP 簡訊驗證碼。" },
+
+      { id: 11, stage: 3, stageName: "第三階段 (出發前2週)", title: "預訂初期住宿", subtitle: "預訂 3–7 天 Hostel/短租", details: "預訂位於市中心、方便收信的青年旅館或短租，記下英文地址與電話（填寫入境卡與銀行開戶需要）。" },
+      { id: 12, stage: 3, stageName: "第三階段 (出發前2週)", title: "準備澳洲初期網卡", subtitle: "eSIM 或實體漫遊卡", details: "先買好 3~7 天抵達初期使用的澳洲 eSIM 或預付卡，確保降落澳洲時立即有網路可用。" },
+      { id: 13, stage: 3, stageName: "第三階段 (出發前2週)", title: "準備英文履歷 (CV)", subtitle: "適合澳洲職場的格式", details: "撰寫精簡的英文履歷（頂端註明簽證類型與 Availability），上傳雲端並可預先列印 5~10 份備用。" },
+      { id: 14, stage: 3, stageName: "第三階段 (出發前2週)", title: "重要文件隨身包整理", subtitle: "紙本列印 + 雲端備份", details: "隨身攜帶：護照正本、簽證核準信、財力證明、保險單、機票/住宿單、台灣駕照與國際駕照/NAATI譯本、藥品英文處方箋。" },
+
+      { id: 15, stage: 4, stageName: "第四階段 (落地1-3天)", title: "辦理澳洲電信門號", subtitle: "實名制開通手機卡", details: "至門市或超市購入 Prepaid 預付卡（如 Telstra、Optus、Boost），憑護照完成實名認證，取得澳洲手機號碼。" },
+      { id: 16, stage: 4, stageName: "第四階段 (落地1-3天)", title: "開立澳洲銀行帳戶", subtitle: "Everyday + Savings 帳戶", details: "帶護照正本、澳洲手機號碼、住宿地址與簽證核準信至銀行門市（如 CBA、NAB）開戶。入境 6 週內只需護照即可完成驗證。" },
+      { id: 17, stage: 4, stageName: "第四階段 (落地1-3天)", title: "免費線上申請稅號 (TFN)", subtitle: "合法工作必備", details: "<b>人必須已在澳洲境內</b>。至 ATO 官網填寫外國護照持有人 TFN 申請，完成後記錄 Reference Number，紙本信件於 28 天內寄達。" },
+
+      { id: 18, stage: 5, stageName: "第五階段 (雇主報到)", title: "準備雇主報到文件包", subtitle: "開始白工工作前提交", details: "需提交給雇主：<br>1. 稅號 (TFN)<br>2. 銀行 BSB 與 Account Number<br>3. 護照與 VEVO 簽證狀態<br>4. 退休金帳戶資料 (Super)<br>5. 相關工作證照 (RSA / 白卡 / RSG 等)" }
+    ];
+
+    let currentStage = 0;
+    let filteredTasks = [...taskData];
+    let currentIndex = 0;
+    
+    // LocalStorage 資料儲存
+    let completedTaskIds = JSON.parse(localStorage.getItem('au_whv_completed')) || [];
+    let taskDueDates = JSON.parse(localStorage.getItem('au_whv_duedates')) || {};
+    let departureDate = localStorage.getItem('au_whv_departure') || "";
+
+    // 月曆當前年月
+    let calCurrentDate = new Date();
+
+    window.onload = () => {
+      renderStageTabs();
+      filterTasksByStage(0);
+      updateProgressBar();
+    };
+
+    // 視圖切換
+    function switchView(view) {
+      const cardWrapper = document.getElementById('card-view-wrapper');
+      const calWrapper = document.getElementById('calendar-view');
+      const btnCard = document.getElementById('btn-card-view');
+      const btnCal = document.getElementById('btn-cal-view');
+
+      if (view === 'card') {
+        cardWrapper.style.display = 'block';
+        calWrapper.style.display = 'none';
+        btnCard.classList.add('active');
+        btnCal.classList.remove('active');
+      } else {
+        cardWrapper.style.display = 'none';
+        calWrapper.style.display = 'block';
+        btnCal.classList.add('active');
+        btnCard.classList.remove('active');
+        renderCalendar();
+      }
+    }
+
+    // 重置所有資料功能
+    function resetAllData() {
+      if (confirm("⚠️ 確定要重置所有任務完成紀錄與日期設定嗎？此操作不可逆。")) {
+        localStorage.removeItem('au_whv_completed');
+        localStorage.removeItem('au_whv_duedates');
+        localStorage.removeItem('au_whv_departure');
+        completedTaskIds = [];
+        taskDueDates = {};
+        departureDate = "";
+        filterTasksByStage(0);
+        updateProgressBar();
+        alert("已成功清空所有紀錄！");
+      }
+    }
+
+    // 渲染階段分頁
+    function renderStageTabs() {
+      const tabsContainer = document.getElementById('stage-tabs');
+      const stages = [
+        { id: 0, name: "全部任務" },
+        { id: 1, name: "1. 簽證文件" },
+        { id: 2, name: "2. 機票財務" },
+        { id: 3, name: "3. 住宿打包" },
+        { id: 4, name: "4. 落地行政" },
+        { id: 5, name: "5. 雇主報到" }
+      ];
+
+      tabsContainer.innerHTML = stages.map(s => `
+        <button class="tab-btn ${s.id === currentStage ? 'active' : ''}" onclick="filterTasksByStage(${s.id})">
+          ${s.name}
+        </button>
+      `).join('');
+    }
+
+    function filterTasksByStage(stageId) {
+      currentStage = stageId;
+      renderStageTabs();
+      filteredTasks = stageId === 0 ? [...taskData] : taskData.filter(t => t.stage === stageId);
+      currentIndex = 0;
+      renderCard();
+    }
+
+    // 渲染卡片內容
+    function renderCard() {
+      const cardEl = document.getElementById('flashcard');
+      cardEl.classList.remove('flipped');
+
+      if (filteredTasks.length === 0) return;
+
+      const task = filteredTasks[currentIndex];
+      const isCompleted = completedTaskIds.includes(task.id);
+      const dueDate = taskDueDates[task.id] || "";
+
+      // 檢查防呆 (前置任務是否已完成)
+      const isPrereqMet = (task.id === 1) || completedTaskIds.includes(task.id - 1);
+
+      // 正面：基本資訊
+      document.getElementById('front-stage').innerText = `#${task.id} ${task.stageName}`;
+      document.getElementById('front-title').innerText = task.title;
+      document.getElementById('front-subtitle').innerText = task.subtitle;
+
+      // 正面：日期輸入值與動態 min / max 設置 (時間線性防呆)
+      const dateInput = document.getElementById('due-date-input');
+      dateInput.value = dueDate;
+      
+      // 計算 min：前一項任務的完成日
+      let minDate = "";
+      if (task.id > 1 && taskDueDates[task.id - 1]) {
+        minDate = taskDueDates[task.id - 1];
+      }
+      // 計算 max：後一項任務的完成日
+      let maxDate = "";
+      if (task.id < taskData.length && taskDueDates[task.id + 1]) {
+        maxDate = taskDueDates[task.id + 1];
+      }
+
+      if (minDate) dateInput.setAttribute('min', minDate);
+      else dateInput.removeAttribute('min');
+
+      if (maxDate) dateInput.setAttribute('max', maxDate);
+      else dateInput.removeAttribute('max');
+
+      // 反面：任務詳細步驟
+      document.getElementById('back-details').innerHTML = task.details;
+
+      // 警示框與按鈕狀態控制 (防呆與逾期)
+      const warningBox = document.getElementById('warning-box');
+      const checkBtn = document.getElementById('check-btn');
+
+      if (!isPrereqMet) {
+        // 前置任務未完成：鎖定按鈕
+        warningBox.style.display = 'flex';
+        warningBox.innerText = `⚠️ 防呆提醒：請先完成前置任務 #${task.id - 1}！`;
+        checkBtn.className = 'action-check-btn disabled';
+        checkBtn.innerHTML = '<span>🔒 請先完成上一項任務</span>';
+      } else if (isCompleted) {
+        warningBox.style.display = 'none';
+        checkBtn.className = 'action-check-btn completed';
+        checkBtn.innerHTML = '<span>🎉 已完成 (點擊取消)</span>';
+      } else {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (dueDate && dueDate < todayStr) {
+          warningBox.style.display = 'flex';
+          warningBox.innerText = `⚠️ 此任務已超出預定完成日 (${dueDate})！`;
+        } else {
+          warningBox.style.display = 'none';
+        }
+        checkBtn.className = 'action-check-btn';
+        checkBtn.innerHTML = '<span>✅ 標記為已完成</span>';
+      }
+
+      document.getElementById('card-counter').innerText = `${currentIndex + 1} / ${filteredTasks.length}`;
+    }
+
+    // 翻牌控制 (避開正面互動按鈕/輸入框)
+    function flipCard(event) {
+      if (event.target.closest('.action-check-btn') || 
+          event.target.closest('.date-picker-wrapper')) return;
+      document.getElementById('flashcard').classList.toggle('flipped');
+    }
+
+    // 修正卡片導覽完整迴圈 (Card Navigation Loop)
+    function prevCard() {
+      if (currentIndex > 0) {
+        currentIndex--;
+      } else {
+        currentIndex = filteredTasks.length - 1; // 迴圈回到最後一張
+      }
+      renderCard();
+    }
+
+    function nextCard() {
+      if (currentIndex < filteredTasks.length - 1) {
+        currentIndex++;
+      } else {
+        currentIndex = 0; // 迴圈回到第一張
+      }
+      renderCard();
+    }
+
+    // 儲存預定完成日（含時間線性防呆機制）
+    function saveDueDate(event) {
+      const task = filteredTasks[currentIndex];
+      const selectedDate = event.target.value;
+
+      if (selectedDate) {
+        // 線性防呆 1：不可早於前一項任務的日期
+        if (task.id > 1 && taskDueDates[task.id - 1]) {
+          const prevDate = taskDueDates[task.id - 1];
+          if (selectedDate < prevDate) {
+            alert(`⚠️ 時間不符順序！任務 #${task.id} 的預定日不能早於前一項任務 (#${task.id - 1}: ${prevDate})`);
+            event.target.value = taskDueDates[task.id] || "";
+            return;
+          }
+        }
+
+        // 線性防呆 2：不可晚於後一項任務的日期
+        if (task.id < taskData.length && taskDueDates[task.id + 1]) {
+          const nextDate = taskDueDates[task.id + 1];
+          if (selectedDate > nextDate) {
+            alert(`⚠️ 時間不符順序！任務 #${task.id} 的預定日不能晚於下一項任務 (#${task.id + 1}: ${nextDate})`);
+            event.target.value = taskDueDates[task.id] || "";
+            return;
+          }
+        }
+
+        taskDueDates[task.id] = selectedDate;
+      } else {
+        delete taskDueDates[task.id];
+      }
+
+      localStorage.setItem('au_whv_duedates', JSON.stringify(taskDueDates));
+      renderCard();
+    }
+
+    // 切換完成狀態 (防呆檢查與機票觸發)
+    function toggleTaskComplete(event) {
+      event.stopPropagation();
+      const task = filteredTasks[currentIndex];
+      const isPrereqMet = (task.id === 1) || completedTaskIds.includes(task.id - 1);
+
+      if (!isPrereqMet) {
+        alert(`⚠️ 請照順序執行！必須先完成任務 #${task.id - 1}`);
+        return;
+      }
+
+      // 如果要取消完成，必須檢查後續任務是否已完成
+      if (completedTaskIds.includes(task.id)) {
+        const hasNextCompleted = completedTaskIds.includes(task.id + 1);
+        if (hasNextCompleted) {
+          alert(`⚠️ 無法取消！請先取消後續任務 #${task.id + 1} 的完成狀態。`);
+          return;
+        }
+        completedTaskIds = completedTaskIds.filter(id => id !== task.id);
+        
+        // 若取消的是購買機票任務 (#6)，清除出發日期
+        if (task.id === 6) {
+          departureDate = "";
+          localStorage.removeItem('au_whv_departure');
+        }
+      } else {
+        completedTaskIds.push(task.id);
+        
+        // 觸發機票任務 (#6) 特殊彈窗
+        if (task.id === 6) {
+          openFlightModal();
+        }
+      }
+
+      localStorage.setItem('au_whv_completed', JSON.stringify(completedTaskIds));
+      renderCard();
+      updateProgressBar();
+    }
+
+    // 機票 Modal 邏輯
+    function openFlightModal() {
+      const modal = document.getElementById('flight-modal');
+      const input = document.getElementById('departure-date-input');
+      input.value = departureDate || taskDueDates[6] || "";
+      modal.style.display = 'flex';
+    }
+
+    function closeFlightModal() {
+      document.getElementById('flight-modal').style.display = 'none';
+    }
+
+    function saveDepartureDate() {
+      const val = document.getElementById('departure-date-input').value;
+      if (val) {
+        departureDate = val;
+        localStorage.setItem('au_whv_departure', departureDate);
+      }
+      closeFlightModal();
+      if (document.getElementById('calendar-view').style.display === 'block') {
+        renderCalendar();
+      }
+    }
+
+    // 更新進度條
+    function updateProgressBar() {
+      const total = taskData.length;
+      const completed = completedTaskIds.length;
+      const percentage = Math.round((completed / total) * 100);
+
+      document.getElementById('progress-text').innerText = `${completed} / ${total} (${percentage}%)`;
+      document.getElementById('progress-fill').style.width = `${percentage}%`;
+    }
+
+    // --- 月曆檢視邏輯 ---
+    function changeCalMonth(delta) {
+      calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = calCurrentDate.getFullYear();
+      const month = calCurrentDate.getMonth();
+      
+      document.getElementById('cal-month-title').innerText = `${year}年 ${month + 1}月`;
+
+      const calGrid = document.getElementById('cal-grid-body');
+      calGrid.innerHTML = '';
+
+      // 星期頭標
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      weekdays.forEach(w => {
+        calGrid.innerHTML += `<div class="cal-weekday">${w}</div>`;
+      });
+
+      // 該月第1天與總天數
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // 填補空白天數
+      for (let i = 0; i < firstDayIndex; i++) {
+        calGrid.innerHTML += `<div class="cal-day" style="background:transparent; border:none;"></div>`;
+      }
+
+      // 渲染日期
+      for (let day = 1; day <= totalDays; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = dateStr === todayStr;
+
+        let dayEventsHTML = '';
+
+        // 特殊標記：飛往澳洲出發日
+        if (departureDate && dateStr === departureDate) {
+          dayEventsHTML += `<div class="cal-badge departure" title="✈️ 飛往澳洲出發日！" onclick="jumpToTask(6)">✈️ 出發日</div>`;
+        }
+
+        // 尋找當天有設定 due date 的任務標記
+        taskData.forEach(t => {
+          if (taskDueDates[t.id] === dateStr) {
+            const isDone = completedTaskIds.includes(t.id);
+            let statusClass = isDone ? 'done' : (dateStr < todayStr ? 'overdue' : 'pending');
+            dayEventsHTML += `<div class="cal-badge ${statusClass}" title="#${t.id} ${t.title}" onclick="jumpToTask(${t.id})">#${t.id}</div>`;
+          }
+        });
+
+        calGrid.innerHTML += `
+          <div class="cal-day ${isToday ? 'today' : ''}">
+            <span class="cal-day-num">${day}</span>
+            <div class="cal-badge-container">
+              ${dayEventsHTML}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 從月曆直接跳轉到該任務
+    function jumpToTask(taskId) {
+      switchView('card');
+      filterTasksByStage(0); // 切換至全部
+      const targetIndex = taskData.findIndex(t => t.id === taskId);
+      if (targetIndex !== -1) {
+        currentIndex = targetIndex;
+        renderCard();
+      }
+    }
+  </script>
+
+
+
+<script>
+  // 註冊 Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          console.log('Service Worker 註冊成功:', reg.scope);
+        })
+        .catch((err) => {
+          console.error('Service Worker 註冊失敗:', err);
+        });
+    });
+  }
+</script>
+
+
+  
+</body>
+</html>

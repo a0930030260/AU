@@ -1,1 +1,20 @@
-
+{
+  "short_name": "澳打任務卡",
+  "name": "澳洲打工度假行前任務卡",
+  "description": "提供澳洲打工度假行前準備事項、時間排程與清單追蹤的 PWA 工具",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23002B49'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='280'>🦘</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#002B49",
+  "theme_color": "#002B49",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "./",
+  "lang": "zh-TW"
+}
